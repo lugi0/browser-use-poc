@@ -6,9 +6,11 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+# This data is hidden to the LLM itself
+sensitive_data = {'rhoai_password': os.getenv("RHOAI_PASSWORD")}
 
-# Initialize the model
-llm = ChatGoogleGenerativeAI(model='gemini-2.0-flash', api_key=SecretStr(os.getenv('<YOUR-API-KEY>')))  # if using ollama, api_key will not be needed
+# Initialize the model, e.g.
+# llm = ChatGoogleGenerativeAI(model='gemini-2.0-flash', api_key=SecretStr(os.getenv('GEMINI_API_KEY'))) - if using ollama, api_key will not be needed
 task = f"""
    ### Prompt for Data Scientist Assistant - Red Hat OpenShift AI
 
@@ -16,7 +18,7 @@ task = f"""
 Visit the [RHOAI dashboard]({os.getenv("RHOAI_DASHBOARD_URL")}), go to the model registry section, register a new model called gemini-2.0-flash
 
 **Important:**
-- If you are required to log in, use the {os.getenv("RHOAI_IDP")} identity provider with username {os.getenv("RHOAI_USERNAME")} and password {os.getenv("RHOAI_PASSWORD")}
+- If you are required to log in, use the {os.getenv("RHOAI_IDP")} identity provider with username {os.getenv("RHOAI_USERNAME")} and password rhoai_password
 - If you don't see the Model registry section anywhere, try looking under the Models section
 ---
 
@@ -31,12 +33,14 @@ Visit the [RHOAI dashboard]({os.getenv("RHOAI_DASHBOARD_URL")}), go to the model
 - You should be able to find a link to the model registry page on the left navbar
 - If you do not see it right away, try looking under the Models section
 - Once you get to the model registry page, if there is a "loading" message try waiting for a bit, and if the page doesn't fully load in a reasonable time try refreshing until you see the fully loaded page
+- If there are models already registered, check their names and ensure that in the next step you use a different name
 
 ---
 
 ### Step 3: Register a new model
 - Start the process of registering a new model
-- When filling out the details, give it the name gemini-2.0-flash + a random id
+- When filling out the details, give it the name gemini-2.0-flash + current time
+- **Important:** After filling in any of the fields, confirm that the UI does not show you an error message like "Model name already exists". If it does, try using a different value.
 - In the description, leave a short message saying who you are and what you're doing
 - If there are any other required fields, put any data you want there
 - The storage details are not important for now, you can use placeholder values
@@ -55,6 +59,7 @@ async def main():
     agent = Agent(
         task=task,
         llm=llm,
+        sensitive_data=sensitive_data
     )
     result = await agent.run()
     print(result)
